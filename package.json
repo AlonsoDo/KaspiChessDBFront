@@ -1,0 +1,27 @@
+{
+  "name": "KaspiChessDB",
+  "version": "0.0.1",
+  "description": "A Chess Games DataBase",
+  "main": "index.html",
+  "type": "module",
+  "keywords": [
+    "Chess",
+    "Games",
+    "DataBase"
+  ],
+  "author": "ApoloSoft",
+  "license": "Free",
+  "dependencies": {
+    "@chrisoakman/chessboardjs": "^1.0.0",
+    "chess.js": "^1.0.0-beta.4",
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
+  },
+  "engines": {
+    "node": "18.15.0",
+    "npm": "9.5.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

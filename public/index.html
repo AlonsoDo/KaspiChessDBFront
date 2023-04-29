@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>KaspiChessDB v0.0.1</title>   
+        <script src = "/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+        <script src="js/jquery-ui.js"></script>
+        <link rel="stylesheet" href="css/jquery-ui.css">
+        <link rel="stylesheet" type="text/css" href="css/jquery-ui-1.12.icon-font.min.css" />
+        <script src="js/chessboard-1.0.0.min.js"></script>
+        <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
+        <script src="js/funciones.js"></script>
+        <script type="text/javascript"> 
+        
+            var chess = new Chess(); 
+            var board1;           
+
+            $(document).ready(function(){
+                
+                var socket = io(); 
+                
+                // Posicion inicial
+                var config = {position:'start',draggable:true,onDrop:onDrop,onSnapEnd:onSnapEnd};
+                board1 = ChessBoard('board1',config);
+
+                var oMove = {
+                    NodoPadre:-1,
+                    NodoHijo:0,
+                    fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                    san:''
+                }
+                aHistoryTree.push(oMove);
+
+                $('button').css('border-radius','0px 0px 0px 0px');
+                $('#btFLIP').button();
+                $('#btINI').button();
+                $('#btPREV').button();
+                $('#btNEXT').button();
+                $('#btEND').button(); 
+
+                $('#btFLIP').on('click',function(){
+                    board1.flip();
+                });
+
+                $('#btINI').on('click',function(){
+                    board1.position(aHistoryTree[0].fen);
+                    nNodoPadre = 0;
+                    chess.reset();
+                    nDeepMove = 0;
+                });
+
+                $('#btPREV').on('click',function(){
+                    btPREV();
+                });
+                                                
+            }); 
+        </script>
+    </head>
+    <body>
+        <div id="maindiv" style="background-color:#e8e8e8; border:0px coral solid; width:1106px; height:626px; margin:4px auto 2px auto;">
+            <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:396px; height:474px;">
+                <div id="board1" style="width:400px;"></div>
+                <div style="float:left; margin-top:8px; margin-left:8px; background-color:#e8e8e8; border:2px coral solid; width:376px; height:58px;">
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btFLIP" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-shuffle">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btINI" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowstop-1-w">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btPREV" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowthick-1-w">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btEND" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowthick-1-e">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btNEXT" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowstop-1-e">icon</span></button>
+                </div>
+            </div>    
+        </div>
+    </body>
+</html>
