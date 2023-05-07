@@ -1,16 +1,30 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>KaspiChessDB v0.0.1</title>   
+        <title>KaspiChessDB v0.0.7</title>   
         <script src = "/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
         <script src="js/jquery-ui.js"></script>
         <link rel="stylesheet" href="css/jquery-ui.css">
+        <link rel="stylesheet" type="text/css" media="screen" href="css/ui.jqgrid.css"/>
+        <script src="js/grid.locale-en.js" type="text/javascript"></script>
+        <script src="js/jquery.jqGrid.min.js" type="text/javascript"></script>
         <link rel="stylesheet" type="text/css" href="css/jquery-ui-1.12.icon-font.min.css" />
         <script src="js/chessboard-1.0.0.min.js"></script>
         <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
         <script src="js/funciones.js"></script>
+        
+        <style>
+            .ui-corner-all, .ui-corner-top, .ui-corner-left, .ui-corner-tl, .ui-corner-right, .ui-corner-tr, .ui-corner-bottom, .ui-corner-bl, .ui-corner-br {
+            border-radius:0;
+            -moz-border-radius:0;
+            -webkit-border-radius:0;
+            -khtml-border-radius:0;}
+
+            .ui-jqgrid tr.jqgrow td {font-size:30px; font-weight:bold !important}
+        </style>
+        
         <script type="text/javascript"> 
         
             var chess = new Chess(); 
@@ -19,6 +33,12 @@
             $(document).ready(function(){
                 
                 var socket = io(); 
+
+                socket.on('IniSANs', function(msg){
+                    console.log(msg);
+                    // Rellenar grid de movimientos SANs
+                    FillGrid1(msg);
+                });
                 
                 // Posicion inicial
                 var config = {position:'start',draggable:true,onDrop:onDrop,onSnapEnd:onSnapEnd};
@@ -28,16 +48,19 @@
                     NodoPadre:-1,
                     NodoHijo:0,
                     fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-                    san:''
+                    san:'',
+                    source:'',
+                    target:''
                 }
                 aHistoryTree.push(oMove);
 
-                $('button').css('border-radius','0px 0px 0px 0px');
                 $('#btFLIP').button();
                 $('#btINI').button();
                 $('#btPREV').button();
                 $('#btNEXT').button();
                 $('#btEND').button(); 
+
+                IniGrid1();
 
                 $('#btFLIP').on('click',function(){
                     board1.flip();
@@ -53,22 +76,42 @@
                 $('#btPREV').on('click',function(){
                     btPREV();
                 });
+
+                $('#btNEXT').on('click',function(){
+                    btNEXT();
+                });
+
+                $('#btEND').on('click',function(){
+                    btEND();
+                });
                                                 
             }); 
         </script>
     </head>
     <body>
         <div id="maindiv" style="background-color:#e8e8e8; border:0px coral solid; width:1106px; height:626px; margin:4px auto 2px auto;">
+            
             <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:396px; height:474px;">
                 <div id="board1" style="width:400px;"></div>
                 <div style="float:left; margin-top:8px; margin-left:8px; background-color:#e8e8e8; border:2px coral solid; width:376px; height:58px;">
-                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btFLIP" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-shuffle">icon</span></button>
-                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btINI" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowstop-1-w">icon</span></button>
-                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btPREV" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowthick-1-w">icon</span></button>
-                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btEND" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowthick-1-e">icon</span></button>
-                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btNEXT" title="test" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowstop-1-e">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btFLIP" title="Change the side of the pieces" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-shuffle">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btINI" title="Go to the first position" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowstop-1-w">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btPREV" title="Go to the previous position" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowthick-1-w">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btNEXT" title="Go to the next position" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowthick-1-e">icon</span></button>
+                    <button style="width:56px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btEND" title="Go to the final position" type="button"><span style="float:left; font-size:32px; margin-left:-10px;" class="ui-icon ui-icon-arrowstop-1-e">icon</span></button>
                 </div>
-            </div>    
+            </div>
+            
+            <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:396px; height:474px;">
+                <table id="Grid1"></table>
+            </div>
+            
+            <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:278px; height:474px;">
+            </div>
+
+            <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:1094px; height:134px;">
+            </div>
+
         </div>
     </body>
 </html>

@@ -12,7 +12,8 @@ function onDrop (source, target, piece, newPos, oldPos, orientation) {
     //console.log('Old position: ' + Chessboard.objToFen(oldPos))
     //console.log('Orientation: ' + orientation)
     
-    var result = chess.move({ from:source, to:target, promotion:'q' })
+    // Hacer movimiento
+    var result = chess.move({ from:source, to:target, promotion:'q' });
     
     // Movimiento ilegal
     if ( result == null){
@@ -27,6 +28,12 @@ function onDrop (source, target, piece, newPos, oldPos, orientation) {
             found = true;
             nNodoPadre = aHistoryTree[i].NodoPadre;
             nNodoHijo = aHistoryTree[i].NodoHijo;
+
+
+            //Test!!!!
+            nNodoPadre = nNodoHijo;
+
+
             console.log(nNodoPadre);
             console.log(nNodoHijo);
             console.log(aHistoryTree[i].san);
@@ -43,7 +50,9 @@ function onDrop (source, target, piece, newPos, oldPos, orientation) {
             NodoPadre:nNodoPadre,
             NodoHijo:nNodoHijo,
             fen:chess.fen(),
-            san:chess.history({verbose:true})[nDeepMove].san
+            san:chess.history({verbose:true})[nDeepMove].san,
+            source:source,
+            target:target
         }
 
         aHistoryTree.push(oMove);
@@ -70,12 +79,17 @@ function btPREV(){
     }
 
     // Buscar Nodo Padre e Hijo nuevos
-    for (var i = 0; i < aHistoryTree.length; i++) {
+    for (var i = 0; i < aHistoryTree.length; i++){
         if (nNodoPadre == aHistoryTree[i].NodoHijo){
             nNodoPadre = aHistoryTree[i].NodoPadre;
             nNodoHijo = aHistoryTree[i].NodoHijo;
+            if (nNodoPadre== -1){
+                nNodoPadre = 0;
+                nNodoHijo = 1;                
+            }
             console.log(nNodoPadre);
             console.log(nNodoHijo);
+            console.log(aHistoryTree[i].san);
             nDeepMove--;
             if (nDeepMove == -1){
                 nDeepMove = 0;
@@ -85,4 +99,92 @@ function btPREV(){
             break;
         }
     }
+}
+
+function btNEXT(){
+    for (var i = 0; i < aHistoryTree.length; i++){
+        // Nuevo padre
+        if (nNodoPadre == aHistoryTree[i].NodoPadre){
+            nNodoPadre = aHistoryTree[i].NodoHijo;
+            // Nuevo hijo
+            for (var j = 0; j < aHistoryTree.length; j++){
+                if (nNodoPadre == aHistoryTree[j].NodoPadre){
+                    nNodoHijo = aHistoryTree[j].NodoHijo;
+                    break;
+                }
+            }
+            console.log(nNodoPadre);
+            console.log(nNodoHijo);                        
+            nDeepMove++;
+            chess.move({from:aHistoryTree[i].source,to:aHistoryTree[i].target,promotion:'q'});
+            board1.position(chess.fen());
+            console.log(aHistoryTree[i].san);
+            break;
+        }
+    }
+}
+
+function btEND(){
+    
+    // Cojer la variante principal
+    board1.position(aHistoryTree[0].fen);
+    nNodoPadre = 0;
+    chess.reset();
+    nDeepMove = 0;
+    
+    while (true){
+        
+        // Ningun movimiento todavia
+        if (aHistoryTree.length == 1){
+            return;
+        // No hay mas hijos
+        }else if (nNodoPadre == nNodoHijo){
+            return;
+        }
+        
+        for (var i = 0; i < aHistoryTree.length; i++){
+            // Nuevo padre
+            if (nNodoPadre == aHistoryTree[i].NodoPadre){
+                nNodoPadre = aHistoryTree[i].NodoHijo;
+                // Nuevo hijo
+                for (var j = 0; j < aHistoryTree.length; j++){
+                    if (nNodoPadre == aHistoryTree[j].NodoPadre){
+                        nNodoHijo = aHistoryTree[j].NodoHijo;
+                        break;
+                    }
+                }
+                console.log(nNodoPadre);
+                console.log(nNodoHijo);            
+                nDeepMove++;
+                chess.move({from:aHistoryTree[i].source,to:aHistoryTree[i].target,promotion:'q'});
+                board1.position(chess.fen());
+                console.log(aHistoryTree[i].san);
+                break;
+            }
+        }
+
+    }// End while
+}
+
+function IniGrid1(){
+
+    $("#Grid1").jqGrid({
+        datatype: 'local',
+        colModel: [
+            { label: 'Moves', name: 'Moves', key: true, index: 'Moves', width: 100},            
+            { label: 'Games', name: 'Games', width: 130},
+            { label: 'Stats', name: 'Stats', width: 150}
+        ],
+        height: 422
+    });
+      
+}
+
+function FillGrid1(msg){
+
+    jQuery("#Grid1").jqGrid("clearGridData");
+    for (var i = 0; i < msg.length; i++){
+        jQuery("#Grid1").jqGrid('addRowData',i+1,{Moves:msg[i].SAN,Games:'1000',Stats:'test'});
+    }
+
 }
