@@ -63,6 +63,8 @@ function onDrop (source, target, piece, newPos, oldPos, orientation) {
     }
 
     nDeepMove++;
+
+    SeekFEN(chess.fen());
     
 }
 
@@ -96,6 +98,7 @@ function btPREV(){
             }
             chess.undo();
             board1.position(chess.fen());
+            SeekFEN(chess.fen());
             break;
         }
     }
@@ -118,6 +121,7 @@ function btNEXT(){
             nDeepMove++;
             chess.move({from:aHistoryTree[i].source,to:aHistoryTree[i].target,promotion:'q'});
             board1.position(chess.fen());
+            SeekFEN(chess.fen());
             console.log(aHistoryTree[i].san);
             break;
         }
@@ -158,6 +162,7 @@ function btEND(){
                 nDeepMove++;
                 chess.move({from:aHistoryTree[i].source,to:aHistoryTree[i].target,promotion:'q'});
                 board1.position(chess.fen());
+                SeekFEN(chess.fen());
                 console.log(aHistoryTree[i].san);
                 break;
             }
@@ -169,13 +174,18 @@ function btEND(){
 function IniGrid1(){
 
     $("#Grid1").jqGrid({
-        datatype: 'local',
-        colModel: [
+        datatype:'local',
+        colModel:[
             { label: 'Moves', name: 'Moves', key: true, index: 'Moves', width: 100},            
             { label: 'Games', name: 'Games', width: 130},
             { label: 'Stats', name: 'Stats', width: 150}
         ],
-        height: 422
+        height:422,
+        onSelectRow:function(id){
+            // get data from the column 'Moves'
+            var SANMove = $(this).jqGrid('getCell',id,'Moves');
+            ClickOnSANMove(SANMove);
+        }
     });
       
 }
@@ -187,4 +197,66 @@ function FillGrid1(msg){
         jQuery("#Grid1").jqGrid('addRowData',i+1,{Moves:msg[i].SAN,Games:'1000',Stats:'test'});
     }
 
+}
+
+function SeekFEN(FEN){
+    socket.emit('SeekFEN',FEN);
+}
+
+function ClickOnSANMove(SANMove){
+    // Hacer movimiento
+    var result = chess.move(SANMove);
+    
+    // Movimiento ilegal
+    if ( result == null){
+        return 'snapback';
+    }    
+
+    // Buscar movimiento repetido
+    var fen = chess.fen();
+    var found = false;
+    for (var i = 0; i < aHistoryTree.length; i++){
+        if (fen == aHistoryTree[i].fen){
+            found = true;
+            nNodoPadre = aHistoryTree[i].NodoPadre;
+            nNodoHijo = aHistoryTree[i].NodoHijo;
+
+
+            //Test!!!!
+            nNodoPadre = nNodoHijo;
+
+
+            console.log(nNodoPadre);
+            console.log(nNodoHijo);
+            console.log(aHistoryTree[i].san);
+            break;
+        }
+    }
+    
+    // Movimiento nuevo
+    if (!found){    
+        
+        nNodoHijo = aHistoryTree.length;
+        
+        var oMove = {
+            NodoPadre:nNodoPadre,
+            NodoHijo:nNodoHijo,
+            fen:chess.fen(),
+            san:chess.history({verbose:true})[nDeepMove].san,
+            source:chess.history({verbose:true})[nDeepMove].from,
+            target:chess.history({verbose:true})[nDeepMove].to
+        }
+
+        aHistoryTree.push(oMove);
+
+        nNodoPadre = nNodoHijo;
+        
+        console.log(oMove); 
+    }
+
+    nDeepMove++;
+
+    SeekFEN(chess.fen());
+
+    board1.position(chess.fen());
 }
