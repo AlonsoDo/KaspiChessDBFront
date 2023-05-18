@@ -40,10 +40,16 @@
                 socket = io(); 
 
                 socket.on('SANs', function(msg){
+                    console.log('Nodo test: ' + msg.Nodo);
                     console.log(msg);
                     // Rellenar grid de movimientos SANs
-                    FillGrid1(msg);
-                });                
+                    FillGrid1(msg.resultSelectSans);
+                    socket.emit('LoadGames',msg.Nodo);                    
+                });  
+                
+                socket.on('LoadGamesBack', async function (msg) {                    
+                    FillGrid2(msg.resultSelectGames);
+                });    
                 
                 // Posicion inicial
                 var config = {position:'start',draggable:true,onDrop:onDrop,onSnapEnd:onSnapEnd};
@@ -65,7 +71,10 @@
                 $('#btNEXT').button();
                 $('#btEND').button(); 
 
+                //$(".ui-jqgrid-titlebar").hide();
                 IniGrid1();
+                IniGrid2();
+                $('.ui-jqgrid-hdiv').hide();
 
                 $('#btFLIP').on('click',function(){
                     board1.flip();
@@ -116,6 +125,7 @@
             </div>
 
             <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:1094px; height:134px;">
+                <table id="Grid2"></table>
             </div>
 
         </div>

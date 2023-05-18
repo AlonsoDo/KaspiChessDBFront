@@ -64,7 +64,7 @@ function onDrop (source, target, piece, newPos, oldPos, orientation) {
 
     nDeepMove++;
 
-    SeekFEN(chess.fen());
+    SeekFEN(chess.fen());    
     
 }
 
@@ -190,11 +190,38 @@ function IniGrid1(){
       
 }
 
+function IniGrid2(){
+
+    $("#Grid2").jqGrid({
+        datatype:'local',
+        colModel:[
+            { label: 'Number', name: 'Number', key: true, index: 'Number', width: 80},            
+            { label: 'Games', name: 'Games', width: 1002}
+        ],
+        height:132,
+        onSelectRow:function(id){
+            alert('Test');
+        }
+    });    
+      
+}
+
 function FillGrid1(msg){
 
     jQuery("#Grid1").jqGrid("clearGridData");
     for (var i = 0; i < msg.length; i++){
         jQuery("#Grid1").jqGrid('addRowData',i+1,{Moves:msg[i].SAN,Games:'1000',Stats:'test'});
+    }
+
+}
+
+function FillGrid2(msg){
+
+    alert(msg[0])
+
+    jQuery("#Grid2").jqGrid("clearGridData");
+    for (var i = 0; i < msg.length; i++){
+        jQuery("#Grid2").jqGrid('addRowData',i+1,{Number:msg[i].IdGame,Games:msg[i].PGNGame});
     }
 
 }

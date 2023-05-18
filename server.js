@@ -42,7 +42,7 @@ io.on('connection', async function(socket){
     console.log('A user connected. Sending initial SAN moves');
     const resultSelectSansIni = await SelectSansFromTree(1);
     console.log(resultSelectSansIni);
-    io.to(socket.id).emit('SANs',resultSelectSansIni);
+    io.to(socket.id).emit('SANs',{resultSelectSans:resultSelectSansIni,Nodo:1});
 
     socket.on('SeekFEN', async function (msg) {
         console.log(msg);
@@ -51,11 +51,19 @@ io.on('connection', async function(socket){
             console.log(resultSeekFEN[0].Nodo);
             // Pasar nodo padre para optener los movimientos SANs
             var resultSelectSans = await SelectSansFromTree(resultSeekFEN[0].Nodo);
-            io.to(socket.id).emit('SANs',resultSelectSans);
+            io.to(socket.id).emit('SANs',{resultSelectSans:resultSelectSans,Nodo:resultSeekFEN[0].Nodo});
         }else{
-            io.to(socket.id).emit('SANs',[]);
+            var resultSelectSans = [];
+            io.to(socket.id).emit('SANs',{resultSelectSans:resultSelectSans,Nodo:0});
         }
     });
+
+    socket.on('LoadGames', async function (msg) {
+        console.log('Nodo: ' + msg);
+        var resultSelectGames = await SelectGames(msg);
+        console.log(resultSelectGames[0]);
+        socket.emit('LoadGamesBack',{resultSelectGames:resultSelectGames});
+    });    
     
     socket.on('disconnect', function () {
         console.log('A user disconnected');
@@ -82,6 +90,17 @@ async function SelectSansFromTree(NodoPadre){
 async function SelectFENFromTree(FEN){
     return new Promise((resolve, reject)=>{
         pool.query("SELECT * FROM tree WHERE FEN = '" + FEN + "'", (error, results)=>{
+            if(error){
+                return reject(error);
+            }
+            return resolve(results);
+        });
+    });
+};
+
+async function SelectGames(Nodo){
+    return new Promise((resolve, reject)=>{
+        pool.query("SELECT gameref.IdGame,games.PGNGame FROM gameref JOIN games ON gameref.IdGame=games.IdGame WHERE gameref.Nodo='" + Nodo + "' LIMIT 10", (error, results)=>{
             if(error){
                 return reject(error);
             }
