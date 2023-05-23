@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>KaspiChessDB v0.0.8</title>   
+        <title>KaspiChessDB v0.0.9</title>   
         <script src = "/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
         <script src="js/jquery-ui.js"></script>
@@ -12,10 +12,13 @@
         <link rel="stylesheet" type="text/css" href="css/jquery-ui-1.12.icon-font.min.css" />
         <script src="js/chessboard-1.0.0.min.js"></script>
         <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">               
-        <!---<script src="https://cdn.jsdelivr.net/npm/chess.js@1.0.0-beta.5/dist/chess.min.js"></script>--->        
-        <!---<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0-beta.4/chess.js"></script>--->
-        <!---<script src="js/chess.js" type="module"></script> no funciona--->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
+        
+        <!---<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>--->
+        
+        <script>var exports = {};</script>
+        
+        <script src="js/chess.js"></script>
+        
         <script src="js/funciones.js"></script>
                 
         <style>
@@ -25,13 +28,22 @@
             -webkit-border-radius:0;
             -khtml-border-radius:0;}
 
-            .ui-jqgrid tr.jqgrow td {font-size:24px; font-weight:bold !important}
+            .ui-jqgrid tr.jqgrow td {font-weight:bold !important}
+            
+            .myclass td  {
+            font-family:Times, serif;
+            font-size:14px;
+            }
+
+            .myclass2 td  {
+            font-family:Times, serif;
+            font-size:24px;
+            }
         </style>
         
         <script type="text/javascript"> 
         
             var chess = new Chess();
-            //var chess = new chessJs; 
             var board1;  
             var socket;         
 
@@ -75,6 +87,8 @@
                 IniGrid1();
                 IniGrid2();
                 $('.ui-jqgrid-hdiv').hide();
+                jQuery("#Grid2").addClass("myclass");
+                jQuery("#Grid1").addClass("myclass2");
 
                 $('#btFLIP').on('click',function(){
                     board1.flip();

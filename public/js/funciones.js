@@ -195,8 +195,14 @@ function IniGrid2(){
     $("#Grid2").jqGrid({
         datatype:'local',
         colModel:[
-            { label: 'Number', name: 'Number', key: true, index: 'Number', width: 80},            
-            { label: 'Games', name: 'Games', width: 1002}
+            { label: 'IdGame', name: 'IdGame', width: 50},
+            { label: 'White', name: 'White',  width: 180},            
+            { label: 'WElo', name: 'WElo', width: 30},
+            { label: 'Black', name: 'Black',  width: 180},            
+            { label: 'BElo', name: 'BElo', width: 30},
+            { label: 'Event', name: 'Event', width: 200},
+            { label: 'Date', name: 'Date', width: 70},
+            { label: 'Result', name: 'Result', width: 50}
         ],
         height:132,
         onSelectRow:function(id){
@@ -217,11 +223,9 @@ function FillGrid1(msg){
 
 function FillGrid2(msg){
 
-    alert(msg[0])
-
     jQuery("#Grid2").jqGrid("clearGridData");
     for (var i = 0; i < msg.length; i++){
-        jQuery("#Grid2").jqGrid('addRowData',i+1,{Number:msg[i].IdGame,Games:msg[i].PGNGame});
+        jQuery("#Grid2").jqGrid('addRowData',i+1,{IdGame:msg[i].IdGame,White:msg[i].White,WElo:msg[i].WhiteElo,Black:msg[i].Black,BElo:msg[i].BlackElo,Event:msg[i].Event,Date:msg[i].Date,Result:msg[i].Result});
     }
 
 }

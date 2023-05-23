@@ -17,6 +17,8 @@ var pool  = mysql.createPool({
     port            : 3306
 });
 
+import { parse } from '@mliebelt/pgn-parser';
+
 import { Chess } from 'chess.js';
 const chess = new Chess();
 
@@ -59,10 +61,22 @@ io.on('connection', async function(socket){
     });
 
     socket.on('LoadGames', async function (msg) {
-        console.log('Nodo: ' + msg);
+        
+        //console.log('Nodo: ' + msg);
         var resultSelectGames = await SelectGames(msg);
-        console.log(resultSelectGames[0]);
-        socket.emit('LoadGamesBack',{resultSelectGames:resultSelectGames});
+        //console.log(resultSelectGames[0].PGNGame);
+        
+        var resultFormated = [];
+
+        for (var i = 0; i < resultSelectGames.length; i++){
+            var game = parse(resultSelectGames[i].PGNGame, {startRule: "game"});            
+            resultFormated.push({IdGame:resultSelectGames[i].IdGame,White:game.tags.White,WhiteElo:game.tags.WhiteElo,Black:game.tags.Black,BlackElo:game.tags.BlackElo,Event:game.tags.Event,Date:game.tags.Date.value,Result:game.tags.Result});
+        }
+        
+        //console.log(JSON.stringify(game.tags.White, null, 2))
+        //console.log(JSON.stringify(game.tags.Date.year, null, 2))
+
+        socket.emit('LoadGamesBack',{resultSelectGames:resultFormated});
     });    
     
     socket.on('disconnect', function () {
