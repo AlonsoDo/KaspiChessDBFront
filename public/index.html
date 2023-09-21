@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>KaspiChessDB v0.0.9</title>   
+        <title>KaspiChessDB v0.1.0</title>   
         <script src = "/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
         <script src="js/jquery-ui.js"></script>
@@ -31,12 +31,12 @@
             .ui-jqgrid tr.jqgrow td {font-weight:bold !important}
             
             .myclass td  {
-            font-family:Times, serif;
+            font-family:Arial,serif;
             font-size:14px;
             }
 
             .myclass2 td  {
-            font-family:Times, serif;
+            font-family:Arial,serif;
             font-size:24px;
             }
         </style>
@@ -45,7 +45,9 @@
         
             var chess = new Chess();
             var board1;  
-            var socket;         
+            var socket;
+            var nIndexGames = 0; 
+            var nNodo;        
 
             $(document).ready(function(){
                 
@@ -53,13 +55,15 @@
 
                 socket.on('SANs', function(msg){
                     console.log('Nodo test: ' + msg.Nodo);
+                    nNodo = msg.Nodo;
                     console.log(msg);
                     // Rellenar grid de movimientos SANs
                     FillGrid1(msg.resultSelectSans);
-                    socket.emit('LoadGames',msg.Nodo);                    
+                    socket.emit('LoadGames',{Nodo:msg.Nodo,nIndexGames:nIndexGames});                    
                 });  
                 
-                socket.on('LoadGamesBack', async function (msg) {                    
+                socket.on('LoadGamesBack', async function (msg) { 
+                    nIndexGames = msg.nIndexGames;                   
                     FillGrid2(msg.resultSelectGames);
                 });    
                 
@@ -83,7 +87,12 @@
                 $('#btNEXT').button();
                 $('#btEND').button(); 
 
-                //$(".ui-jqgrid-titlebar").hide();
+                //Navegar por games
+                $('#btINIGames').button();
+                $('#btPREVGames').button();
+                $('#btNEXTGames').button();
+                $('#btENDGames').button();
+                
                 IniGrid1();
                 IniGrid2();
                 $('.ui-jqgrid-hdiv').hide();
@@ -113,6 +122,22 @@
                 $('#btEND').on('click',function(){
                     btEND();
                 });
+
+                $('#btNEXTGames').on('click',function(){
+                    btNEXTGames();
+                });
+
+                $('#btPREVGames').on('click',function(){
+                    btPREVGames();
+                });
+
+                $('#btINIGames').on('click',function(){
+                    btINIGames();
+                });
+
+                $('#btENDGames').on('click',function(){
+                    btENDGames();
+                });
                                                 
             }); 
         </script>
@@ -135,11 +160,19 @@
                 <table id="Grid1"></table>
             </div>
             
-            <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:278px; height:474px;">
+            <div id="DivMoves" style="position:relative; overflow-x:hidden; overflow-y:scroll; float:left; background-color:#e8e8e8; border:6px coral solid; width:278px; height:474px;">
             </div>
 
             <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:1094px; height:134px;">
-                <table id="Grid2"></table>
+                <div style="float:left; background-color:#e8e8e8; border:0px coral solid; width:840px; height:130px;">
+                    <table id="Grid2" style="float:left;"></table>
+                </div>
+                <div style="float:left; margin-top:8px; margin-left:32px; background-color:#e8e8e8; border:2px coral solid; width:196px; height:50px;">
+                    <button style="width:26px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btINIGames" title="Go to the first games" type="button"><span style="float:left; font-size:20px; margin-left:-12px;" class="ui-icon ui-icon-arrowstop-1-w">icon</span></button>
+                    <button style="width:26px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btPREVGames" title="Go to the previous games" type="button"><span style="float:left; font-size:20px; margin-left:-12px;" class="ui-icon ui-icon-arrowthick-1-w">icon</span></button>
+                    <button style="width:26px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btNEXTGames" title="Go to the next games" type="button"><span style="float:left; font-size:20px; margin-left:-12px;" class="ui-icon ui-icon-arrowthick-1-e">icon</span></button>
+                    <button style="width:26px; float:left; margin-top:8px; margin-left:8px; font-family:Arial,Helvetica,sans-serif; font-weight:bold;" id="btENDGames" title="Go to the final games" type="button"><span style="float:left; font-size:20px; margin-left:-12px;" class="ui-icon ui-icon-arrowstop-1-e">icon</span></button>
+                </div>
             </div>
 
         </div>

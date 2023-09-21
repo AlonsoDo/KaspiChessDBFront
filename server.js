@@ -61,10 +61,10 @@ io.on('connection', async function(socket){
     });
 
     socket.on('LoadGames', async function (msg) {
+
+        console.log('nIndexGames: ' + msg.nIndexGames)
         
-        //console.log('Nodo: ' + msg);
         var resultSelectGames = await SelectGames(msg);
-        //console.log(resultSelectGames[0].PGNGame);
         
         var resultFormated = [];
 
@@ -76,8 +76,32 @@ io.on('connection', async function(socket){
         //console.log(JSON.stringify(game.tags.White, null, 2))
         //console.log(JSON.stringify(game.tags.Date.year, null, 2))
 
-        socket.emit('LoadGamesBack',{resultSelectGames:resultFormated});
-    });    
+        socket.emit('LoadGamesBack',{resultSelectGames:resultFormated,nIndexGames:msg.nIndexGames});
+    }); 
+    
+    socket.on('LoadLastGames', async function (msg) {
+        var aCountGames = await CountGames(msg);
+        console.log('Numero de registros: ' + aCountGames.length);
+
+        var nIndexGames = aCountGames.length - 10;
+        if (nIndexGames < 0){
+            nIndexGames = 0;
+        }
+
+        var resultSelectGames = await SelectGames({Nodo:msg.Nodo,nIndexGames:nIndexGames});
+        
+        var resultFormated = [];
+
+        for (var i = 0; i < resultSelectGames.length; i++){
+            var game = parse(resultSelectGames[i].PGNGame, {startRule: "game"});            
+            resultFormated.push({IdGame:resultSelectGames[i].IdGame,White:game.tags.White,WhiteElo:game.tags.WhiteElo,Black:game.tags.Black,BlackElo:game.tags.BlackElo,Event:game.tags.Event,Date:game.tags.Date.value,Result:game.tags.Result});
+        }
+        
+        //console.log(JSON.stringify(game.tags.White, null, 2))
+        //console.log(JSON.stringify(game.tags.Date.year, null, 2))
+
+        socket.emit('LoadGamesBack',{resultSelectGames:resultFormated,nIndexGames:nIndexGames});
+    });
     
     socket.on('disconnect', function () {
         console.log('A user disconnected');
@@ -92,7 +116,7 @@ http.listen(process.env.PORT || 3000, function() {
 // Funciones
 async function SelectSansFromTree(NodoPadre){
     return new Promise((resolve, reject)=>{
-        pool.query("SELECT * FROM tree WHERE NodoPadre = '" + NodoPadre + "'", (error, results)=>{
+        pool.query("SELECT * FROM tree WHERE NodoPadre = '" + NodoPadre + "' ORDER BY Games DESC", (error, results)=>{
             if(error){
                 return reject(error);
             }
@@ -112,9 +136,21 @@ async function SelectFENFromTree(FEN){
     });
 };
 
-async function SelectGames(Nodo){
+async function SelectGames(msg){
     return new Promise((resolve, reject)=>{
-        pool.query("SELECT gameref.IdGame,games.PGNGame FROM gameref JOIN games ON gameref.IdGame=games.IdGame WHERE gameref.Nodo='" + Nodo + "' LIMIT 10", (error, results)=>{
+        pool.query("SELECT gameref.IdGame,games.PGNGame FROM gameref JOIN games ON gameref.IdGame=games.IdGame WHERE gameref.Nodo='" + msg.Nodo + "' LIMIT " + msg.nIndexGames + " , 10", (error, results)=>{
+            if(error){
+                return reject(error);
+            }
+            return resolve(results);
+        });
+    });
+};
+
+async function CountGames(msg){
+    console.log('Nodo: ' + msg.Nodo);
+    return new Promise((resolve, reject)=>{
+        pool.query("SELECT * FROM gameref WHERE Nodo = '" + msg.Nodo + "'", (error, results)=>{
             if(error){
                 return reject(error);
             }
