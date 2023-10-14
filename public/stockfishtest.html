@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Stockfish.js en HTML</title>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/stockfish-js@latest/stockfish.js"></script>
+  <script>
+    const stockfish = require("stockfish");
+
+    const engine = new stockfish.Engine();
+
+    const board = engine.getBoard();
+
+    const moves = engine.getLegalMoves(board);
+
+    console.log(moves);
+  </script>
+</body>
+</html>
