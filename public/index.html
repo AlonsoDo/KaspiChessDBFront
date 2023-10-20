@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>KaspiChessDB v0.1.5</title>   
+        <title>KaspiChessDB v0.1.6</title>   
         <script src = "/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
         <script src="js/jquery-ui.js"></script>
@@ -77,7 +77,8 @@
                     fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
                     san:'',
                     source:'',
-                    target:''
+                    target:'',
+                    DeepMove:0
                 }
                 aHistoryTree.push(oMove);
 
@@ -105,10 +106,14 @@
 
                 $('#btINI').on('click',function(){
                     board1.position(aHistoryTree[0].fen);
-                    nNodoPadre = 0;
                     chess.reset();
                     SeekFEN(chess.fen());
                     nDeepMove = 0;
+                    LastEvent = 'btINI';                    
+                    DentroVariante = false;
+                    nNodoPadre = 0;
+                    nNodoHijo = 1; 
+                    BufferNodoHijo = nNodoHijo; 
                 });
 
                 $('#btPREV').on('click',function(){
