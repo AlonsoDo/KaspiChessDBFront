@@ -117,12 +117,14 @@ function DrawMove(SANMove){
     if (HayHermano()){
 
         for (var i = 0; i < aControlSepa.length; i++){
-            if (PrimerHermano() == aControlSepa[i].NodoHijo){
-            
+            if (PrimerHermano() == aControlSepa[i].NodoHijo){            
                 if (ContHermanos()==2){
-                    LastMove = 'move'+BufferNodoHijo;
+                    //LastMove = 'move'+BufferNodoHijo;
+                    LastMove = aControlSepa[i].Sepa;   
+                    //alert('Test1:'+LastMove)                 
                 }else{
                     LastMove = aControlSepa[i].Sepa;
+                    //alert('Test2:'+LastMove)
                 }                                                                                                           
             } 
         }
@@ -173,11 +175,13 @@ function DrawMove(SANMove){
                 if (DentroVariante == false){                     
                     for (var i = 0; i < aControlSepa.length; i++){
                         if (BufferNodoHijo == aControlSepa[i].NodoHijo){
-                            LastMove = aControlSepa[i].Sepa;                                                                                                                                                                                   
+                            LastMove = aControlSepa[i].Sepa; 
+                            //alert('Test3:'+LastMove)                                                                                                                                                                                  
                         } 
                     }
                 }else{                    
-                    LastMove = 'move' + nNodoPadre;                    
+                    LastMove = 'move' + nNodoPadre;
+                    //alert('Test4:'+LastMove)                    
                     DentroVariante = false;
                 }            
             }
@@ -296,7 +300,8 @@ function btEND(){
         // No hay mas hijos
         }else if (nNodoPadre == nNodoHijo){
             DentroVariante = false; 
-            BufferNodoHijo = nNodoHijo;                      
+            BufferNodoHijo = nNodoHijo; 
+            SeekFEN(chess.fen());                     
             return;
         }
         
@@ -315,7 +320,7 @@ function btEND(){
                 nDeepMove++;
                 chess.move({from:aHistoryTree[i].source,to:aHistoryTree[i].target,promotion:'q'});
                 board1.position(chess.fen());
-                SeekFEN(chess.fen());                
+                //SeekFEN(chess.fen());                
                 break;
             }
         }
@@ -389,7 +394,7 @@ function SeekFEN(FEN){
 }
 
 function ClickOnSANMove(SANMove){
-    // Hacer movimiento
+    /*// Hacer movimiento
     var result = chess.move(SANMove);
     
     // Movimiento ilegal
@@ -436,18 +441,133 @@ function ClickOnSANMove(SANMove){
 
     SeekFEN(chess.fen());
 
+    board1.position(chess.fen());*/
+
+
+    try {
+        chess.move(SANMove);
+    }catch (err) {
+        return 'snapback';
+    }
+    
+    BufferNodoPadre = nNodoPadre;
+    BufferNodoHijo = nNodoHijo;
+       
+    var fen = chess.fen();
+    var found = false;
+    
+    for (var i = 0; i < aHistoryTree.length; i++){
+        // Movimiento repetido
+        if (fen == aHistoryTree[i].fen){
+            found = true;            
+            LastEvent = 'RepeMove';
+            nNodoPadre = aHistoryTree[i].NodoPadre;
+            nNodoHijo = aHistoryTree[i].NodoHijo;           
+            for (var i = 0; i < aControlSepa.length; i++){
+                if (nNodoHijo == aControlSepa[i].NodoHijo){
+                    if (aControlSepa[i].DentroVariante){
+                        if (ContHermanos()==2){
+                            LastMove = 'move'+nNodoHijo; 
+                        }else{
+                            LastMove = aControlSepa[i].Sepa;
+                        }                                                      
+                        LastMove2 = LastMove;                            
+                    }else{                         
+                        if (ContHermanos()==2){                            
+                            LastMove = 'move'+nNodoHijo; 
+                        }else{                            
+                            LastMove = aControlSepa[i].Sepa;
+                        }                        
+                        LastMove2 = LastMove;                            
+                    }                                                                                                        
+                }     
+            }            
+
+            nNodoPadre = nNodoHijo;                
+            
+            break;
+        }
+    }    
+    
+    // Movimiento nuevo
+    if (!found){        
+        
+        BufferNodoHijo = nNodoHijo;
+        
+        nNodoHijo = aHistoryTree.length;        
+        
+        var oMove = {
+            NodoPadre:nNodoPadre,
+            NodoHijo:nNodoHijo,
+            fen:chess.fen(),
+            san:chess.history({verbose:true})[nDeepMove].san,
+            source:chess.history({verbose:true})[nDeepMove].from,
+            target:chess.history({verbose:true})[nDeepMove].to,
+            DeepMove:nDeepMove
+        }
+
+        aHistoryTree.push(oMove);        
+        
+        console.log(oMove); 
+
+        //LastEvent = 'Reset';
+
+        DrawMove(chess.history({verbose:true})[nDeepMove].san);
+
+        nNodoPadre = nNodoHijo;
+
+        //LastEvent = 'NewMove';
+    }    
+    
+    nDeepMove++;
+    
+    SeekFEN(chess.fen());
+
     board1.position(chess.fen());
 }
 
 function ClickOnVariant(move){
-    alert('test:'+move)
-    
-    var aBuffer = [];
-    var nCont = 0;
+        
+    var aBuffer = [];    
+    var MoveId = move.substring(4);
+    nNodoPadre = MoveId;
+    //nNodoHijo = MoveId;
+    chess.reset();
 
-    for (var i = aHistoryTree.length; i > 0 ; i--){
-        alert(i-1)
+    BufferNodoHijo = nNodoHijo;
+
+    // Ruta de la variante ascendente
+    for (var i = aHistoryTree.length-1; i >= 0 ; i--){
+        if (nNodoPadre == aHistoryTree[i].NodoHijo){
+            nNodoPadre = aHistoryTree[i].NodoPadre;
+            nNodoHijo = aHistoryTree[i].NodoHijo;
+            var fen = aHistoryTree[i].fen;
+            var san = aHistoryTree[i].san;
+            var source = aHistoryTree[i].source;
+            var target = aHistoryTree[i].target;
+            var Deep = aHistoryTree[i].DeepMove; 
+            aBuffer.push({NodoPadre:nNodoPadre,NodoHijo:nNodoHijo,fen:fen,san:san,source:source,target:target,DeepMove:Deep});
+        }
     }
+
+    console.log(aBuffer)
+
+    // Cargar posiciones de la variante
+    for (var i = aBuffer.length; i > 0 ; i--){
+        nNodoPadre = aBuffer[i-1].NodoPadre;
+        nNodoHijo = aBuffer[i-1].NodoHijo;        
+        nDeepMove = aBuffer[i-1].DeepMove;
+        if (nNodoPadre!=-1){
+            chess.move({from:aBuffer[i-1].source,to:aBuffer[i-1].target,promotion:'q'});
+            board1.position(chess.fen());
+        }         
+    }
+    
+    SeekFEN(chess.fen());
+
+    nNodoPadre = nNodoHijo;
+    nDeepMove++;
+
 }
 
 function btNEXTGames(){
