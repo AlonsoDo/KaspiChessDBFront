@@ -102,6 +102,12 @@ io.on('connection', async function(socket){
 
         socket.emit('LoadGamesBack',{resultSelectGames:resultFormated,nIndexGames:nIndexGames});
     });
+
+    socket.on('LoadPGNGame', async function (msg) {
+        var resultSelectPGNGame = await SelectPGNGame(msg);
+        console.log(resultSelectPGNGame[0].PGNGame);
+        io.to(socket.id).emit('LoadPGNGameBack',resultSelectPGNGame[0].PGNGame);
+    });
     
     socket.on('disconnect', function () {
         console.log('A user disconnected');
@@ -151,6 +157,18 @@ async function CountGames(msg){
     console.log('Nodo: ' + msg.Nodo);
     return new Promise((resolve, reject)=>{
         pool.query("SELECT * FROM gameref WHERE Nodo = '" + msg.Nodo + "'", (error, results)=>{
+            if(error){
+                return reject(error);
+            }
+            return resolve(results);
+        });
+    });
+};
+
+async function SelectPGNGame(msg){
+    console.log('Game: ' + msg);
+    return new Promise((resolve, reject)=>{
+        pool.query("SELECT * FROM games WHERE IdGame = '" + msg + "'", (error, results)=>{
             if(error){
                 return reject(error);
             }

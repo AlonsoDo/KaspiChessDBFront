@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>KaspiChessDB v0.2.0</title>   
+        <title>KaspiChessDB v0.3.1</title>   
         <script src = "/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
         <script src="js/jquery-ui.js"></script>
@@ -65,7 +65,12 @@
                 socket.on('LoadGamesBack', async function (msg) { 
                     nIndexGames = msg.nIndexGames;                   
                     FillGrid2(msg.resultSelectGames);
-                });    
+                });
+                
+                socket.on('LoadPGNGameBack', async function (msg) { 
+                    //console.log(msg);
+                    LoadPGNGame(msg);
+                });
                 
                 // Posicion inicial
                 var config = {position:'start',draggable:true,onDrop:onDrop,onSnapEnd:onSnapEnd};
@@ -114,6 +119,10 @@
                     nNodoPadre = 0;
                     nNodoHijo = 1; 
                     BufferNodoHijo = nNodoHijo; 
+                    LastMove = 'move1';
+                    $('#'+BufferClick).css('background','#e8e8e8'); 
+                    $('#move'+nNodoPadre).css('background','#f5a742');
+                    BufferClick = 'move'+nNodoPadre;
                 });
 
                 $('#btPREV').on('click',function(){
@@ -180,7 +189,7 @@
                 </div>
                 <div style="float:left; margin-top:8px; margin-left:32px; background-color:#ffffff; border:2px coral solid; width:196px; height:50px;">
                     <label style="margin-top:16px; margin-left:32px; font-size:20px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">KaspiChess</label>
-                    <label style="margin-top:16px; margin-left:8px; font-size:20px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">DataBase v0.2.0</label>
+                    <label style="margin-top:16px; margin-left:8px; font-size:20px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">DataBase v0.3.1</label>
                 </div>
             </div>
 

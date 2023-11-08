@@ -1,6 +1,6 @@
 {
   "name": "KaspiChessDB",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "A Chess Games DataBase",
   "main": "index.html",
   "type": "module",
