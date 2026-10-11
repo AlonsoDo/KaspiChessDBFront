@@ -124,7 +124,19 @@ function onDrop (source, target, piece, newPos, oldPos, orientation) {
 // update the board position after the piece snap
 // for castling, en passant, pawn promotion
 function onSnapEnd(){
+    
     board1.position(chess.fen());
+    
+    // Start a calculation (e.g., depth 35)
+    stockfish.postMessage('stop');
+    stockfish.postMessage('position fen ' + chess.fen());
+    //stockfish.postMessage('go depth 35');
+    stockfish.postMessage('go infinite');
+
+    // Send the 'stop' command to halt the calculation
+    //setTimeout(() => {
+        //stockfish.postMessage('stop'); // Force stop after 5 seconds
+    //}, 5000);
 }
 
 function DrawMove(SANMove){
@@ -270,6 +282,9 @@ function btPREV(){
             chess.undo();
             board1.position(chess.fen());
             SeekFEN(chess.fen());
+            stockfish.postMessage('stop');
+            stockfish.postMessage('position fen ' + chess.fen());
+            stockfish.postMessage('go infinite');
             break;
         }
     }
@@ -297,7 +312,10 @@ function btNEXT(){
             nDeepMove++;
             chess.move({from:aHistoryTree[i].source,to:aHistoryTree[i].target,promotion:'q'});
             board1.position(chess.fen());
-            SeekFEN(chess.fen());            
+            SeekFEN(chess.fen()); 
+            stockfish.postMessage('stop');
+            stockfish.postMessage('position fen ' + chess.fen());
+            stockfish.postMessage('go infinite');           
             break;
         }
     }
@@ -307,6 +325,10 @@ function btNEXT(){
 }
 
 function btEND(){
+
+    //stockfish.postMessage('stop');
+    //stockfish.postMessage('ucinewgame');
+    //stockfish.postMessage('isready');
 
     LastEvent = 'btEND';
     
@@ -326,6 +348,9 @@ function btEND(){
             DentroVariante = false; 
             BufferNodoHijo = nNodoHijo; 
             SeekFEN(chess.fen());
+            stockfish.postMessage('stop');
+            stockfish.postMessage('position fen ' + chess.fen());
+            stockfish.postMessage('go infinite');            
             $('#'+BufferClick).css('background','#e8e8e8'); 
             $('#move'+nNodoPadre).css('background','#f5a742');
             BufferClick = 'move'+nNodoPadre;                    
@@ -365,7 +390,7 @@ function IniGrid1(){
             { label: 'Games', name: 'Games', width: 130},
             { label: 'Stats', name: 'Stats', width: 150}
         ],
-        height:472,
+        height:378,
         onSelectRow:function(id){
             // get data from the column 'Moves'
             var SANMove = $(this).jqGrid('getCell',id,'Moves');
@@ -513,6 +538,10 @@ function ClickOnSANMove(SANMove){
 
     board1.position(chess.fen());
 
+    stockfish.postMessage('stop');
+    stockfish.postMessage('position fen ' + chess.fen());
+    stockfish.postMessage('go infinite');
+
     $('#'+BufferClick).css('background','#e8e8e8');
     $('#move'+nNodoPadre).css('background','#f5a742');
     BufferClick = 'move'+nNodoPadre;
@@ -554,6 +583,10 @@ function ClickOnVariant(move){
     
     SeekFEN(chess.fen());
 
+    stockfish.postMessage('stop');
+    stockfish.postMessage('position fen ' + chess.fen());
+    stockfish.postMessage('go infinite');
+
     nNodoHijo = MoveId;
     BufferNodoHijo = nNodoHijo;
     nNodoPadre = MoveId;
@@ -577,14 +610,19 @@ function delay(milliseconds){
     });
 }
 
-async function LoadPGNGame(Game){    
+async function LoadPGNGame(Game){  
     
+    //stockfish.postMessage('stop');    
+    //stockfish.postMessage('ucinewgame');
+    //stockfish.postMessage('isready');    
+
     //$(document.body).css({'cursor':'wait'});
     $('body').css('cursor','progress');
 
     await delay(500);
     
-    chess.reset();  
+    chess.reset();      
+
     $('#DivMoves').html('');
     PrimeraVez = true;
     aControlSepa = [];    
@@ -604,7 +642,12 @@ async function LoadPGNGame(Game){
         target:'',
         DeepMove:0
     }
-    aHistoryTree.push(oMove);    
+    aHistoryTree.push(oMove); 
+    
+    //stockfish = new Worker('js/stockfish-16.1-lite-single.js');
+    
+    //stockfish.postMessage('position fen ' + aHistoryTree[0].fen);
+    //stockfish.postMessage('go infinite');
 
     for (var i = 0; i < chess.history().length; i++){
         nNodoPadre = i;
@@ -655,7 +698,7 @@ async function LoadPGNGame(Game){
                 $(this).css('background','#e8e8e8');
             }            
         });
-        
+                
     } // End for    
 
     $('#btEND').trigger('click');
@@ -663,7 +706,10 @@ async function LoadPGNGame(Game){
 
     //$(document.body).css({'cursor':'default'});
     await delay(500);
-    $('body').css('cursor','default');
+    $('body').css('cursor','default'); 
+    
+    //stockfish = new Worker('js/stockfish-16.1-lite-single.js'); 
+    //stockfish.postMessage('stop');
 }
 
 function btNEXTGames(){
@@ -731,5 +777,148 @@ function PrimerHermano(){
         if (nNodoPadre == aHistoryTree[i].NodoPadre){
             return aHistoryTree[i].NodoHijo;
         }        
+    }
+}
+
+function ActualizarVar(response){
+
+    var aDatosVar = response.split(' ');
+
+    for (var i = 0; i < aDatosVar.length; i++){
+        if (aDatosVar[i] == 'multipv'){
+            if (aDatosVar[i+1] == '1'){
+                if (aDatosVar[i+3] == 'cp'){
+                    $('#Score1').text(aDatosVar[i+4]/100);
+                    ShowMoves(aDatosVar,1);
+                }else if (aDatosVar[i+3] == 'mate'){
+                    $('#Score1').text('mate')
+                    ShowMoves(aDatosVar,1);
+                } 
+            }else if (aDatosVar[i+1] == '2'){
+                if (aDatosVar[i+3] == 'cp'){
+                    $('#Score2').text(aDatosVar[i+4]/100);
+                    ShowMoves(aDatosVar,2);
+                }else if (aDatosVar[i+3] == 'mate'){
+                    $('#Score2').text('mate')
+                    ShowMoves(aDatosVar,2);
+                } 
+            }else if (aDatosVar[i+1] == '3'){
+                if (aDatosVar[i+3] == 'cp'){
+                    $('#Score3').text(aDatosVar[i+4]/100);
+                    ShowMoves(aDatosVar,3);
+                }else if (aDatosVar[i+3] == 'mate'){
+                    $('#Score3').text('mate')
+                    ShowMoves(aDatosVar,3);
+                } 
+            } 
+        }
+    }
+}
+
+function ShowMoves(aDatosVar,nVar){
+    
+    var cMoves;
+    var lPrimeraVez1,lPrimeraVez2,lPrimeraVez3 = true;
+        
+    for (var i = 0; i < aDatosVar.length; i++){
+        if (aDatosVar[i] == 'pv'){
+            if (nVar == '1'){
+                $('#Variante1').text('');
+                cMoves = '';                
+                chess1.load(chess.fen());
+                lPrimeraVez1 = true;
+                var nTope = 1;
+                for (var j = i+1; j < aDatosVar.length; j++){  
+                    var source = aDatosVar[j].substring(0,2);                    
+                    var target = aDatosVar[j].substring(2,4);
+                    try {
+                        var oMove = chess1.move({ from:source, to:target, promotion:'q' });
+                    }catch (err) {
+                        return;
+                    }
+                    var nJugada = Jugada(chess1.fen());
+                    var cTurno = Turno(chess1.fen());
+                    if (cTurno == 'w'){
+                        cMoves = cMoves + nJugada + '.' + oMove.san;
+                    }else{
+                        if (lPrimeraVez1){
+                            cMoves = cMoves + (nJugada - 1) + '....' + oMove.san + ' ';
+                        }else{
+                            cMoves = cMoves + ' ' + oMove.san + ' ';
+                        }                        
+                    } 
+                    lPrimeraVez1 = false;                   
+                    $('#Variante1').text(cMoves) 
+                    nTope++;
+                    if (nTope > 9){
+                        break;
+                    }                   
+                }                
+            }else if (nVar == '2'){
+                $('#Variante2').text('');
+                cMoves = '';
+                chess2.load(chess.fen());
+                lPrimeraVez2 = true;
+                var nTope = 1;
+                for (var j = i+1; j < aDatosVar.length; j++){  
+                    var source = aDatosVar[j].substring(0,2);                    
+                    var target = aDatosVar[j].substring(2,4);
+                    try {
+                        var oMove = chess2.move({ from:source, to:target, promotion:'q' });
+                    }catch (err) {
+                        return;
+                    }
+                    var nJugada = Jugada(chess2.fen());
+                    var cTurno = Turno(chess2.fen());
+                    if (cTurno == 'w'){
+                        cMoves = cMoves + nJugada + '.' + oMove.san;
+                    }else{
+                        if (lPrimeraVez2){
+                            cMoves = cMoves + (nJugada - 1) + '....' + oMove.san + ' ';
+                        }else{
+                            cMoves = cMoves + ' ' + oMove.san + ' ';
+                        }                        
+                    } 
+                    lPrimeraVez2 = false;                   
+                    $('#Variante2').text(cMoves) 
+                    nTope++;
+                    if (nTope > 9){
+                        break;
+                    }                   
+                }        
+            }else if (nVar == '3'){
+                $('#Variante3').text('');
+                cMoves = '';
+                chess3.load(chess.fen());
+                lPrimeraVez3 = true;
+                var nTope = 1;
+                for (var j = i+1; j < aDatosVar.length; j++){  
+                    var source = aDatosVar[j].substring(0,2);                    
+                    var target = aDatosVar[j].substring(2,4);
+                    try {
+                        var oMove = chess3.move({ from:source, to:target, promotion:'q' });
+                    }catch (err) {
+                        return;
+                    }
+                    var nJugada = Jugada(chess3.fen());
+                    var cTurno = Turno(chess3.fen());
+                    if (cTurno == 'w'){
+                        cMoves = cMoves + nJugada + '.' + oMove.san;
+                    }else{
+                        if (lPrimeraVez3){
+                            cMoves = cMoves + (nJugada - 1) + '....' + oMove.san + ' ';
+                        }else{
+                            cMoves = cMoves + ' ' + oMove.san + ' ';
+                        }                        
+                    } 
+                    lPrimeraVez3 = false;                   
+                    $('#Variante3').text(cMoves) 
+                    nTope++;
+                    if (nTope > 9){
+                        break;
+                    }                   
+                }        
+            }
+        }
     }
 }

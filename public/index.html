@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>KaspiChessDB v0.3.1</title>   
+        <title>KaspiChessDB v0.4.0</title>   
         <script src = "/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
         <script src="js/jquery-ui.js"></script>
@@ -11,7 +11,8 @@
         <script src="js/jquery.jqGrid.min.js" type="text/javascript"></script>
         <link rel="stylesheet" type="text/css" href="css/jquery-ui-1.12.icon-font.min.css" />
         <script src="js/chessboard-1.0.0.min.js"></script>
-        <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">               
+        <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">  
+        <!---<script src="https://unpkg.com/stockfish.js/stockfish.js"></script>--->             
         
         <!---<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>--->
         
@@ -44,14 +45,21 @@
         <script type="text/javascript"> 
         
             var chess = new Chess();
+            var chess1 = new Chess();
+            var chess2 = new Chess();
+            var chess3 = new Chess();
             var board1;  
             var socket;
             var nIndexGames = 0; 
-            var nNodo;        
-
+            var nNodo;  
+                        
+            // Initialize Stockfish.js in a Web Worker
+            //var stockfish = new Worker('js/stockfish-nnue-16-no-simd.js'); 
+            var stockfish = new Worker('js/stockfish-16.1-lite-single.js');  
+            
             $(document).ready(function(){
                 
-                socket = io(); 
+                socket = io();  
 
                 socket.on('SANs', function(msg){
                     console.log('Nodo test: ' + msg.Nodo);
@@ -68,7 +76,7 @@
                 });
                 
                 socket.on('LoadPGNGameBack', async function (msg) { 
-                    //console.log(msg);
+                    //console.log(msg);                    
                     LoadPGNGame(msg);
                 });
                 
@@ -110,9 +118,17 @@
                 });
 
                 $('#btINI').on('click',function(){
+
+                    //stockfish.postMessage('stop');
+                    //stockfish.postMessage('ucinewgame');
+                    //stockfish.postMessage('isready');
+
                     board1.position(aHistoryTree[0].fen);
                     chess.reset();
                     SeekFEN(chess.fen());
+                    stockfish.postMessage('stop');
+                    stockfish.postMessage('position fen ' + chess.fen());
+                    stockfish.postMessage('go infinite');
                     nDeepMove = 0;
                     LastEvent = 'btINI';                    
                     DentroVariante = false;
@@ -122,7 +138,10 @@
                     LastMove = 'move1';
                     $('#'+BufferClick).css('background','#e8e8e8'); 
                     $('#move'+nNodoPadre).css('background','#f5a742');
-                    BufferClick = 'move'+nNodoPadre;
+                    BufferClick = 'move'+nNodoPadre;                    
+                    //stockfish.postMessage('position fen ' + chess.fen());
+                    //stockfish.postMessage('go infinite');
+                    //stockfish.postMessage('uci');
                 });
 
                 $('#btPREV').on('click',function(){
@@ -152,7 +171,42 @@
                 $('#btENDGames').on('click',function(){
                     btENDGames();
                 });
-                                                
+
+                // Test Stockfish  
+                stockfish.postMessage('setoption name MultiPV value 3');              
+
+                // Handle engine output
+                stockfish.addEventListener('message', (e) => {
+                    /*if (e.data === 'uciok') {
+                        save = true;
+                    }*/
+                    const response = e.data;
+                    console.log('Engine response:', response);
+
+                    // Detect if the engine has stopped
+                    if (response.startsWith('bestmove')){
+                        console.log('Calculation stopped. Best move:', response.split(' ')[1]);
+                    }/*else if (response.startsWith('Aborted(RuntimeError: unreachable executed)')){
+                        console.log('Test');
+                        stockfish.terminate();
+                        stockfish = new Worker('js/stockfish-16.1-lite-single.js');
+                        stockfish.postMessage('uci');
+                    }*/
+
+                    //if (save){
+                        //ActualizarVar(response);
+                    //}
+
+                    ActualizarVar(response);
+                }); 
+
+                /*stockfish.onerror = function(error) {
+                    console.error("Error en Stockfish:", error);
+                };*/
+                
+                stockfish.postMessage('uci');
+                stockfish.postMessage('isready');
+                                                                
             }); 
         </script>
     </head>
@@ -170,11 +224,29 @@
                 </div>
             </div>
             
-            <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:396px; height:474px;">
+            <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:396px; height:380px;">
                 <table id="Grid1"></table>
             </div>
             
-            <div id="DivMoves" style="position:relative; overflow-x:hidden; overflow-y:scroll; float:left; background-color:#e8e8e8; border:6px coral solid; width:278px; height:474px;">
+            <div id="DivMoves" style="position:relative; overflow-x:hidden; overflow-y:scroll; float:left; background-color:#e8e8e8; border:6px coral solid; width:278px; height:380px;">
+            </div>
+
+            <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:686px; height:82px;">
+                <div style="float:left; background-color:#e8e8e8; border:1px coral solid; width:684px; height:25px;">
+                    <label style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">Score: </label>
+                    <label id="Score1" style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">0.00 </label>
+                    <label id="Variante1" style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">e4</label>
+                </div>
+                <div style="float:left; background-color:#e8e8e8; border:1px coral solid; width:684px; height:25px;">
+                    <label style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">Score: </label>
+                    <label id="Score2" style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">0.00 </label>
+                    <label id="Variante2" style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">d4</label>
+                </div>
+                <div style="float:left; background-color:#e8e8e8; border:1px coral solid; width:684px; height:26px;">
+                    <label style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">Score: </label>
+                    <label id="Score3" style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">0.00 </label>
+                    <label id="Variante3" style="margin-top:0px; margin-left:2px; font-size:18px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">Nf3</label>
+                </div>
             </div>
 
             <div style="float:left; background-color:#e8e8e8; border:6px coral solid; width:1094px; height:134px;">
@@ -189,7 +261,7 @@
                 </div>
                 <div style="float:left; margin-top:8px; margin-left:32px; background-color:#ffffff; border:2px coral solid; width:196px; height:50px;">
                     <label style="margin-top:16px; margin-left:32px; font-size:20px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">KaspiChess</label>
-                    <label style="margin-top:16px; margin-left:8px; font-size:20px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">DataBase v0.3.1</label>
+                    <label style="margin-top:16px; margin-left:8px; font-size:20px; font-family:Verdana,Arial,Helvetica,sans-serif; font-weight:bold;">DataBase v0.4.0</label>
                 </div>
             </div>
 
